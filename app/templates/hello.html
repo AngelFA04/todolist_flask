@@ -9,30 +9,35 @@
 
 
 {% block content%}
-    {%if username %}
+    <div class="container">
+        {%if username %}
         <h1>Bienvenido, {{username | capitalize  }}</h1>
 
-    {% endif %}
+        {% endif %}
 
-    {% if user_ip %}
-    <h3>Hello, your ip is {{user_ip}}. Have a nice day</h3>
-    {% else %}
-        <a href="{{url_for('index')}}"> Ir a inicio <a>
-    {% endif %}
+        {% if user_ip %}
+        <h3>Hello, your ip is {{user_ip}}. Have a nice day</h3>
+        {% else %}
+            <a href="{{url_for('index')}}"> Ir a inicio <a>
+        {% endif %}
 
-    <div>
-        <!-- <form action="{{url_for('hello')}}" method="POST">
-            {{login_form.username}}
-            {{login_form.username.label}}
-        </form> -->
-        {{ wtf.quick_form(login_form) }}
+        <div class="container">
+            <h2>Crear una nueva tarea</h2>
+            {{wtf.quick_form(todo_form)}}
+        </div>
+
+        <div class="container">
+            <h2>Tareas actuales</h2>
+            <ul>
+                {% for todo in todos %}
+                    {{macros.render_todo(todo, delete_form, update_form)}}
+                {% endfor%}
+            </ul>
+        </div>
     </div>
 
-    <ul>
-        {% for todo in todos %}
-            {{macros.render_todo(todo)}}
-        {% endfor%}
-    </ul>
+    
+    
 {% endblock%}
 
 

@@ -1,8 +1,12 @@
+import unittest
 from flask import Flask, request, make_response, redirect, render_template, session, url_for, flash
 from flask_bootstrap import Bootstrap
-import unittest
+from flask_login import login_required, current_user
 from app import create_app
-from app.forms import LoginForm
+from app.forms import LoginForm, TodoForm, DeleteTodoForm, UpdateTodoForm
+
+from app.firestore_service import get_users, get_todos, todo_put, delete_todo, update_todo
+
 app = create_app()
 
 
@@ -39,29 +43,46 @@ def index():
 
 
 @app.route('/hello', methods=['GET', 'POST'])
+@login_required
 def hello():
     # Get user_ip from browser session
     user_ip = session.get('user_ip')
-    login_form =  LoginForm()
-    username = session.get('username')
+    username = current_user.id
+    todo_form = TodoForm()
+    delete_form = DeleteTodoForm()
+    update_form = UpdateTodoForm()
+
     context = {
         'user_ip':user_ip, 
-        'todos':todos,
-        'login_form': login_form,
+        'todos': get_todos(username),
         'username': username,
+        'current_user': current_user,
+        'todo_form': todo_form,
+        'delete_form': delete_form,
+        'update_form': update_form,
     }
 
-    if login_form.validate_on_submit():
-        username = login_form.username.data
-        session['username'] = username
+    if todo_form.validate_on_submit():
+        todo_put(username, todo_form.description.data)
+        #import pdb; pdb.set_trace()
+        flash('Tarea agregada con éxito', category='alert-success')
 
-        flash('Nombre de usuario registrado con éxito')
-
-        return redirect(url_for('index'))
+        return redirect(url_for('hello'))
 
     return render_template('hello.html', **context)
     
 
-if __name__ == '__main__':
-    app.run(debug=True)
-    
+@app.route('/todos/delete/<todo_id>', methods=['POST'])
+def delete(todo_id):
+    user_id = current_user.id
+    delete_todo(user_id, todo_id)
+
+    return redirect(url_for('hello'))
+
+@app.route('/todos/update/<todo_id>/<int:done>', methods=['POST'])
+def update(todo_id, done):
+    user_id = current_user.id
+
+    update_todo(user_id, todo_id, done)
+
+    return redirect(url_for('hello'))
